@@ -1,7 +1,6 @@
-import Tkinter as tk
-import tkFileDialog
+import tkinter as tk
 from PIL import ImageTk, Image
-
+from tkinter import filedialog
 
 
 class IMAGE():
@@ -17,14 +16,14 @@ class IMAGE():
 	def save(self, filename):
 		self.img.save(filename, format='jpeg')
 	def percentageOfSize(self, size):
-		return self.weight/size if self.weight > self.height else self.height/size
+		return self.weight/float(size) if self.weight > self.height else self.height/float(size)
 	def getTKImage(self, size):
-		return ImageTk.PhotoImage(self.img.resize((int(self.weight/self.percentageOfSize(size)), int(self.weight/self.percentageOfSize(size))), Image.ANTIALIAS))
+		return ImageTk.PhotoImage(self.img.resize((int(self.weight/self.percentageOfSize(size)), int(self.height/self.percentageOfSize(size))), Image.ANTIALIAS))
 
 srcimg, desimg = IMAGE(), IMAGE()
 
-options = {'initialdir' : '/home/Wlogsky/Pictures', 'defaultextension' : '.jpg'}
-defaultFileName = '/home/Wlogsky/Pictures/?.jpg'
+options = {'initialdir' : '.', 'defaultextension' : '.jpg'}
+defaultFileName = './car2.jpg'
 
 win = tk.Tk()
 win.title('Show')
@@ -34,7 +33,7 @@ srcimg.load(defaultFileName)
 tsimg = srcimg.getTKImage(500.0)
 srcpanel = tk.Label(win, image=tsimg)
 srcpanel.place(x=30, y=150, width=500, height=500)
-print(srcimg.img.histogram())
+# print(srcimg.img.histogram())
 
 desimg.load(defaultFileName)
 tdimg = desimg.getTKImage(500.0)
@@ -46,19 +45,20 @@ def load():
 	options['multiple'] = True
 	options['title'] = "tkFileDialog.askopenfilename"
 	options['filetypes'] = [("jpg","*.jpg"), ("bmp", "*.bmp"), ("ppm", "*.ppm"), ("allfiles","*")]
-	file = tkFileDialog.askopenfilename(**options)
+	file = filedialog.askopenfilename(**options)
 	if not file:
 		return
 
 	srcimg.load(file[0])
 	tsimg = srcimg.getTKImage(500.0)
 	srcpanel.configure(image=tsimg)
-    	srcpanel.image = tsimg
+	srcpanel.image = tsimg
 
-    	desimg.load(file[0])
-	tdimg = ImageTk.PhotoImage(desimg.img.resize((int(desimg.weight/desimg.percentageOfSize(500.0)), int(desimg.weight/desimg.percentageOfSize(500.0))), Image.ANTIALIAS))
-    	despanel.configure(image=tdimg)
-    	despanel.image = tdimg
+
+	desimg.load(file[0])
+	tdimg = desimg.getTKImage(500.0)
+	despanel.configure(image=tdimg)
+	despanel.image = tdimg
 
 def save():
 	try:
@@ -67,7 +67,7 @@ def save():
 		pass
 	options['title'] = "tkFileDialog.asksaveasfilename"
 	options['filetypes'] = [("jpg","*.jpg")]
-	file = tkFileDialog.asksaveasfilename(**options)
+	file = filedialog.asksaveasfilename(**options)
 	if not file:
 		options['multiple'] = True		
 		return
