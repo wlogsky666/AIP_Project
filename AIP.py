@@ -1,6 +1,14 @@
+import matplotlib
+matplotlib.use('TkAgg')
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
+
 import tkinter as tk
 from PIL import ImageTk, Image
 from tkinter import filedialog
+import numpy as np
 
 
 class IMAGE():
@@ -19,6 +27,8 @@ class IMAGE():
 		return self.weight/float(size) if self.weight > self.height else self.height/float(size)
 	def getTKImage(self, size):
 		return ImageTk.PhotoImage(self.img.resize((int(self.weight/self.percentageOfSize(size)), int(self.height/self.percentageOfSize(size))), Image.ANTIALIAS))
+	def isNull(self):
+		return self.img == None
 
 srcimg, desimg = IMAGE(), IMAGE()
 
@@ -26,8 +36,9 @@ options = {'initialdir' : '.', 'defaultextension' : '.jpg'}
 defaultFileName = './car2.jpg'
 
 win = tk.Tk()
-win.title('Show')
+win.title('AIP 60647003S')
 win.geometry('1080x720')
+canvas = None
 
 srcpanel = tk.Label(win)
 srcpanel.place(x=30, y=150, width=500, height=500)
@@ -49,11 +60,16 @@ def load(filename=None):
 	srcpanel.configure(image=tsimg)
 	srcpanel.image = tsimg
 
-
 	desimg.load(filename)
 	tdimg = desimg.getTKImage(500.0)
 	despanel.configure(image=tdimg)
 	despanel.image = tdimg
+	if canvas != None:
+		canvas.get_tk_widget().destroy()
+		canvas = None
+
+	size = tk.Label(win, text="%dx%d" % ( srcimg.weight, srcimg.height ), font=("Helvetica", 16))
+	size.place(x=10, y=680 , width=100)
 
 def save():
 	try:
@@ -79,6 +95,34 @@ menu.add_separator()
 menu.add_command(label='Load', command=load)
 menu.add_separator()
 menu.add_command(label='Save', command=save)
-
 win.config(menu=menu)
+
+def press():
+	if srcimg.isNull() :
+		return 
+	blackimg = srcimg.img.convert('L')
+	y = [0]*255
+	for i in range(srcimg.weight):
+		for j in range(srcimg.height):
+			y[blackimg.getpixel((i, j))-1] += 1
+
+	x = np.arange(0, 255)
+	fig=plt.figure(figsize=(500.0/96, 500.0/96))
+	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
+	ax.bar(x, y, linewidth=0, width=1.2, color='black')
+	ax.set_xlabel('Intensity')
+	ax.set_ylabel('Frequency')
+	plt.ylim(0, srcimg.weight*srcimg.height/80)
+	global canvas
+	canvas=FigureCanvasTkAgg(fig, master=win)
+	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
+	canvas.show()
+
+histImg = IMAGE()
+histImg.load('histimg.jpg')
+histImgTmp = histImg.getTKImage(80.0)
+histogram_button = tk.Button(win, command=press, bg='cyan', activebackground='red', image=histImgTmp)
+histogram_button.image = histImgTmp
+histogram_button.place(x=50, y=50, width=90, height=90)
+
 win.mainloop()
