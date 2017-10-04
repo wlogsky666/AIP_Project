@@ -29,33 +29,28 @@ win = tk.Tk()
 win.title('Show')
 win.geometry('1080x720')
 
-srcimg.load(defaultFileName)
-tsimg = srcimg.getTKImage(500.0)
-srcpanel = tk.Label(win, image=tsimg)
+srcpanel = tk.Label(win)
 srcpanel.place(x=30, y=150, width=500, height=500)
-# print(srcimg.img.histogram())
-
-desimg.load(defaultFileName)
-tdimg = desimg.getTKImage(500.0)
-despanel = tk.Label(win, image=tdimg)
+despanel = tk.Label(win)
 despanel.place(x=550, y=150, width=500, height=500)
 
+def load(filename=None):
+	if filename is None:
+		options['multiple'] = True
+		options['title'] = "tkFileDialog.askopenfilename"
+		options['filetypes'] = [("jpg","*.jpg"), ("bmp", "*.bmp"), ("ppm", "*.ppm"), ("allfiles","*")]
+		file = filedialog.askopenfilename(**options)
+		if not file:
+			return
+		filename = file[0]
 
-def load():
-	options['multiple'] = True
-	options['title'] = "tkFileDialog.askopenfilename"
-	options['filetypes'] = [("jpg","*.jpg"), ("bmp", "*.bmp"), ("ppm", "*.ppm"), ("allfiles","*")]
-	file = filedialog.askopenfilename(**options)
-	if not file:
-		return
-
-	srcimg.load(file[0])
+	srcimg.load(filename)
 	tsimg = srcimg.getTKImage(500.0)
 	srcpanel.configure(image=tsimg)
 	srcpanel.image = tsimg
 
 
-	desimg.load(file[0])
+	desimg.load(filename)
 	tdimg = desimg.getTKImage(500.0)
 	despanel.configure(image=tdimg)
 	despanel.image = tdimg
@@ -73,14 +68,17 @@ def save():
 		return
 	desimg.save(file)
 
+try:
+	load(defaultFileName)
+except:
+	pass
 
 menu = tk.Menu(win, tearoff=0)
 menu.add_command(label='Exit', command=win.quit)
 menu.add_separator()
 menu.add_command(label='Load', command=load)
+menu.add_separator()
 menu.add_command(label='Save', command=save)
 
 win.config(menu=menu)
-
-
 win.mainloop()
