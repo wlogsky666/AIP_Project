@@ -137,14 +137,13 @@ def pressHist():
 def pressNoise():
 	pass
 
-histImg, noiseImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg')
-histImgTmp = histImg.getTKImage(70.0)
-noiseImgTmp = noiseImg.getTKImage(70.0)
+histImg, noiseImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'), IMAGE('reload.jpg')
+histImgTmp, noiseImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
 histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp)
 noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp)
-histButton.image = histImgTmp
-noiseButton.image = noiseImgTmp
+reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp)
+histButton.image, noiseButton.image, reloadButton.image = histImgTmp, noiseImgTmp, reloadImgTmp
 histButton.place(x=30, y=30, width=80, height=80)
 noiseButton.place(x=130, y=30, width=80, height=80)
-
+reloadButton.place(x=970, y=30, width=80, height=80)
 win.mainloop()
