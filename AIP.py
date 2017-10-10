@@ -12,12 +12,16 @@ import numpy as np
 
 
 class IMAGE():
-	def __init__(self):
+	def __init__(self, filename=None):
 		self.img = None
+		self.filename = None
 		self.weight = 0
 		self.height = 0	
+		if filename is not None:
+			self.load(filename)
+			self.filename = filename
 	def load(self, filename):
-		if self.img != None:
+		if not self.isNull():
 			self.img.close()
 		self.img = Image.open(filename)
 		self.weight, self.height = self.img.size
@@ -28,7 +32,7 @@ class IMAGE():
 	def getTKImage(self, size):
 		return ImageTk.PhotoImage(self.img.resize((int(self.weight/self.percentageOfSize(size)), int(self.height/self.percentageOfSize(size))), Image.ANTIALIAS))
 	def isNull(self):
-		return self.img == None
+		return self.img is None
 
 srcimg, desimg = IMAGE(), IMAGE()
 
@@ -38,12 +42,19 @@ defaultFileName = './car2.jpg'
 win = tk.Tk()
 win.title('AIP 60647003S')
 win.geometry('1080x720')
-canvas = None
 
 srcpanel = tk.Label(win)
 srcpanel.place(x=30, y=150, width=500, height=500)
 despanel = tk.Label(win)
 despanel.place(x=550, y=150, width=500, height=500)
+
+canvas = None
+def resetCanvas():
+	global canvas
+	if canvas != None:
+		canvas.get_tk_widget().destroy()
+		canvas = None
+
 
 def load(filename=None):
 	if filename is None:
@@ -64,9 +75,8 @@ def load(filename=None):
 	tdimg = desimg.getTKImage(500.0)
 	despanel.configure(image=tdimg)
 	despanel.image = tdimg
-	if canvas != None:
-		canvas.get_tk_widget().destroy()
-		canvas = None
+
+	resetCanvas()
 
 	size = tk.Label(win, text="%dx%d" % ( srcimg.weight, srcimg.height ), font=("Helvetica", 16))
 	size.place(x=10, y=680 , width=100)
@@ -84,6 +94,12 @@ def save():
 		return
 	desimg.save(file)
 
+def reload():
+	resetCanvas()
+	if srcimg.filename is not None:
+		load(srcimg.filename)
+
+
 try:
 	load(defaultFileName)
 except:
@@ -97,7 +113,7 @@ menu.add_separator()
 menu.add_command(label='Save', command=save)
 win.config(menu=menu)
 
-def press():
+def pressHist():
 	if srcimg.isNull() :
 		return 
 	blackimg = srcimg.img.convert('L')
@@ -112,17 +128,23 @@ def press():
 	ax.bar(x, y, linewidth=0, width=1.2, color='black')
 	ax.set_xlabel('Intensity')
 	ax.set_ylabel('Frequency')
-	plt.ylim(0, srcimg.weight*srcimg.height/80)
+	plt.ylim(0, srcimg.weight*srcimg.height/75)
 	global canvas
 	canvas=FigureCanvasTkAgg(fig, master=win)
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
 	canvas.show()
 
-histImg = IMAGE()
-histImg.load('histimg.jpg')
-histImgTmp = histImg.getTKImage(80.0)
-histogram_button = tk.Button(win, command=press, bg='cyan', activebackground='red', image=histImgTmp)
-histogram_button.image = histImgTmp
-histogram_button.place(x=50, y=50, width=90, height=90)
+def pressNoise():
+	pass
+
+histImg, noiseImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg')
+histImgTmp = histImg.getTKImage(70.0)
+noiseImgTmp = noiseImg.getTKImage(70.0)
+histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp)
+noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp)
+histButton.image = histImgTmp
+noiseButton.image = noiseImgTmp
+histButton.place(x=30, y=30, width=80, height=80)
+noiseButton.place(x=130, y=30, width=80, height=80)
 
 win.mainloop()
