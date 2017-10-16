@@ -143,40 +143,41 @@ l1 = tk.Label(win, text = u'a = ', font=("Helvetica", 14))
 l1.place(x=130, y=115, width=30, height=20)
 
 def pressNoise():
+ 
 	if srcimg.isNull() :
-		return 
+ 		return 
 	srcimg.img = srcimg.img.convert('L')
-	a = int(noiseInput.get())
-	print(a)
+	𝜎 = int(noiseInput.get())
+	print(𝜎)
 
 	hist = []
 
 	for x in range(srcimg.height):
 		for y in range(0, srcimg.width-1, 2):
-			r, u = random.random(), random.random()
-			z1 = a * cos(2*pi*u) * sqrt(-2*log(r))
-			z2 = a * sin(2*pi*u) * sqrt(-2*log(r))
+			𝑟, 𝜑 = random.random(), random.random()
+			z1 = 𝜎 * cos(2*pi*𝜑) * sqrt(-2*log(𝑟))
+			z2 = 𝜎 * sin(2*pi*𝜑) * sqrt(-2*log(𝑟))
 			
 			fx1 = srcimg.img.getpixel((y, x)) + z1
 			fx2 = srcimg.img.getpixel((y+1, x)) + z2
 
 			if fx1 < 0: fx1 = 0 ;
 			elif fx1 > 255: fx1 = 255 ;
-
-			if fx2 < 0: fx2 = 0 ;
+ 
+ 			if fx2 < 0: fx2 = 0 ;
 			elif fx2 > 255: fx2 = 255 ;
 
 			srcimg.img.putpixel((y, x), int(fx1))
 			srcimg.img.putpixel((y+1, x), int(fx2))
 			hist.append(round(z1, 1))
 			hist.append(round(z2, 1))
-
+ 
 	# print(hist)
 	hist_max = max(hist)
 	hist_min = min(hist)
-
+ 
 	bins = np.arange(hist_min, hist_max, 0.5)
-
+ 
 	resetCanvas()
 	fig=plt.figure(figsize=(500.0/96, 500.0/96))
 	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
@@ -185,13 +186,14 @@ def pressNoise():
 	canvas=FigureCanvasTkAgg(fig, master=win)
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
 	canvas.show()	
-
+ 	
 	tsimg = srcimg.getTKImage(500.0)
 	srcpanel.configure(image=tsimg)
 	srcpanel.image = tsimg
 
 	desimg.img.close()
 	desimg.img = srcimg.img
+ 
 
 
 
