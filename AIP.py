@@ -20,6 +20,9 @@ class IMAGE():
 		self.reset()
 		if filename is not None:
 			self.load(filename)
+	def __del__(self):
+		if self.img is not None:
+			self.img.close()
 	def load(self, filename):
 		self.reset()
 		self.img = Image.open(filename)
@@ -126,7 +129,7 @@ def pressHist():
 	ax.bar(x, y, linewidth=0, width=1.2, color='black')
 	ax.set_xlabel('Intensity')
 	ax.set_ylabel('Frequency')
-	plt.ylim(0, srcimg.width*srcimg.height/75)
+	plt.ylim(0, srcimg.width*srcimg.height/40)
 	global canvas
 	canvas=FigureCanvasTkAgg(fig, master=win)
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
@@ -143,16 +146,16 @@ def pressNoise():
 	if srcimg.isNull() :
 		return 
 	srcimg.img = srcimg.img.convert('L')
-	𝜎 = int(noiseInput.get())
-	print(𝜎)
+	a = int(noiseInput.get())
+	print(a)
 
 	hist = []
 
 	for x in range(srcimg.height):
 		for y in range(0, srcimg.width-1, 2):
-			𝑟, 𝜑 = random.random(), random.random()
-			z1 = 𝜎 * cos(2*pi*𝜑) * sqrt(-2*log(𝑟))
-			z2 = 𝜎 * sin(2*pi*𝜑) * sqrt(-2*log(𝑟))
+			r, u = random.random(), random.random()
+			z1 = a * cos(2*pi*u) * sqrt(-2*log(r))
+			z2 = a * sin(2*pi*u) * sqrt(-2*log(r))
 			
 			fx1 = srcimg.img.getpixel((y, x)) + z1
 			fx2 = srcimg.img.getpixel((y+1, x)) + z2
@@ -182,7 +185,7 @@ def pressNoise():
 	canvas=FigureCanvasTkAgg(fig, master=win)
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
 	canvas.show()	
-	
+
 	tsimg = srcimg.getTKImage(500.0)
 	srcpanel.configure(image=tsimg)
 	srcpanel.image = tsimg
@@ -194,13 +197,12 @@ def pressNoise():
 
 histImg, noiseImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'), IMAGE('reload.jpg')
 histImgTmp, noiseImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
-histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp)
-noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp)
-reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp)
-histButton.image, noiseButton.image, reloadButton.image = histImgTmp, noiseImgTmp, reloadImgTmp
-histButton.place(x=30, y=30, width=80, height=80)
-noiseButton.place(x=130, y=30, width=80, height=80)
-reloadButton.place(x=970, y=30, width=80, height=80)
+histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp).place(x=30, y=30, width=80, height=80)
+noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp).place(x=130, y=30, width=80, height=80)
+reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp).place(x=970, y=30, width=80, height=80)
+
+def test():
+	print(1)
 
 menu = tk.Menu(win, tearoff=0)
 menu.add_command(label='Exit', command=win.quit)
@@ -209,7 +211,8 @@ menu.add_command(label='Load', command=load)
 menu.add_separator()
 menu.add_command(label='Save', command=save)
 win.config(menu=menu)
+win.protocol("WM_DELETE_WINDOW", win.quit)
 
 win.mainloop()
-win.quit()
+
 
