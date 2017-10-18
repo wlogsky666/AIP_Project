@@ -1,6 +1,7 @@
 # AIP_Project
 
 
+
 ## [Modules]
 
 ### Matplotlib
@@ -13,4 +14,3 @@
     dnf install python3-pillow-tk 
 ### Numpy
     dnf install python3-numpy
-
