@@ -142,15 +142,13 @@ v.set(50)
 l1 = tk.Label(win, text = u'a = ', font=("Helvetica", 14))
 l1.place(x=130, y=115, width=30, height=20)
 
-def pressNoise():
- 
+def pressNoise(): 
 	if srcimg.isNull() :
- 		return 
+		return 
 	srcimg.img = srcimg.img.convert('L')
 	𝜎 = int(noiseInput.get())
-	print(𝜎)
 
-	hist = []
+	hist = list()
 
 	for x in range(srcimg.height):
 		for y in range(0, srcimg.width-1, 2):
@@ -163,21 +161,16 @@ def pressNoise():
 
 			if fx1 < 0: fx1 = 0 ;
 			elif fx1 > 255: fx1 = 255 ;
- 
- 			if fx2 < 0: fx2 = 0 ;
+			if fx2 < 0: fx2 = 0 ;
 			elif fx2 > 255: fx2 = 255 ;
 
 			srcimg.img.putpixel((y, x), int(fx1))
 			srcimg.img.putpixel((y+1, x), int(fx2))
 			hist.append(round(z1, 1))
 			hist.append(round(z2, 1))
- 
-	# print(hist)
-	hist_max = max(hist)
-	hist_min = min(hist)
- 
-	bins = np.arange(hist_min, hist_max, 0.5)
- 
+
+	bins = np.arange(-200, 200, 1)
+
 	resetCanvas()
 	fig=plt.figure(figsize=(500.0/96, 500.0/96))
 	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
@@ -186,15 +179,13 @@ def pressNoise():
 	canvas=FigureCanvasTkAgg(fig, master=win)
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
 	canvas.show()	
- 	
+	
 	tsimg = srcimg.getTKImage(500.0)
 	srcpanel.configure(image=tsimg)
 	srcpanel.image = tsimg
 
 	desimg.img.close()
 	desimg.img = srcimg.img
- 
-
 
 
 histImg, noiseImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'), IMAGE('reload.jpg')
