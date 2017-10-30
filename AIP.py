@@ -96,7 +96,7 @@ def save():
 	except:
 		pass
 	options['title'] = "tkFileDialog.asksaveasfilename"
-	options['filetypes'] = [("jpg","*.jpg")]
+	options['filetypes'] = [("jpg", "*.jpg")]
 	file = filedialog.asksaveasfilename(**options)
 	if not file:
 		options['multiple'] = True		
@@ -187,15 +187,36 @@ def pressNoise():
 	desimg.img.close()
 	desimg.img = srcimg.img
 
+def pressFFT():
+	if srcimg.isNull() :
+		return 
+	srcimg.img = srcimg.img.convert('L')
 
-histImg, noiseImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'), IMAGE('reload.jpg')
-histImgTmp, noiseImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
+	tsimg = srcimg.getTKImage(500.0)
+	srcpanel.configure(image=tsimg)
+	srcpanel.image = tsimg
+
+	pixel = np.asarray(srcimg.img)
+	fourier = np.fft.fft2(pixel)
+	fourier = abs(np.fft.fftshift(fourier))
+	originrange = np.nanmax(fourier[np.isfinite(fourier)]) - np.nanmin(fourier[np.isfinite(fourier)])
+	norm = (fourier-np.nanmin(fourier[np.isfinite(fourier)])) * 255 / originrange
+
+	desimg.img.close()
+	desimg.img = Image.fromarray(norm).convert('L')
+	tdimg = desimg.getTKImage(500.0)
+	despanel.configure(image=tdimg)
+	despanel.image = tdimg
+
+
+
+histImg, noiseImg, fftImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('reload.jpg')
+histImgTmp, noiseImgTmp,fftImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
 histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp).place(x=30, y=30, width=80, height=80)
 noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp).place(x=130, y=30, width=80, height=80)
+fftButton = tk.Button(win, command=pressFFT, bg='cyan', activebackground='red', image=fftImgTmp).place(x=230, y=30, width=80, height=80)
 reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp).place(x=970, y=30, width=80, height=80)
 
-def test():
-	print(1)
 
 menu = tk.Menu(win, tearoff=0)
 menu.add_command(label='Exit', command=win.quit)
