@@ -200,7 +200,7 @@ def pressFFT():
 	fourier = np.fft.fft2(pixel)
 	fourier = abs(np.fft.fftshift(fourier))
 	originrange = np.nanmax(fourier[np.isfinite(fourier)]) - np.nanmin(fourier[np.isfinite(fourier)])
-	norm = (fourier-np.nanmin(fourier[np.isfinite(fourier)])) * 255 / originrange
+	norm = (fourier-np.nanmin(fourier[np.isfinite(fourier)])) * 255 / originrange + 20
 
 	desimg.img.close()
 	desimg.img = Image.fromarray(norm).convert('L')
