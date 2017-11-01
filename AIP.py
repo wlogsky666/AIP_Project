@@ -57,6 +57,15 @@ srcpanel.place(x=30, y=150, width=500, height=500)
 despanel = tk.Label(win)
 despanel.place(x=550, y=150, width=500, height=500)
 
+def showPanel():
+	tsimg = srcimg.getTKImage(500.0)
+	srcpanel.configure(image=tsimg)
+	srcpanel.image = tsimg
+
+	tdimg = desimg.getTKImage(500.0)
+	despanel.configure(image=tdimg)
+	despanel.image = tdimg
+
 canvas = None
 def resetCanvas():
 	global canvas
@@ -76,15 +85,8 @@ def load(filename=None):
 		filename = file[0]
 
 	srcimg.load(filename)
-	tsimg = srcimg.getTKImage(500.0)
-	srcpanel.configure(image=tsimg)
-	srcpanel.image = tsimg
-
 	desimg.load(filename)
-	tdimg = desimg.getTKImage(500.0)
-	despanel.configure(image=tdimg)
-	despanel.image = tdimg
-
+	showPanel()
 	resetCanvas()
 
 	size = tk.Label(win, text="%dx%d %s" % ( srcimg.width, srcimg.height, srcimg.filename.split('.')[1] ), font=("Helvetica", 16))
@@ -106,12 +108,6 @@ def save():
 def reload():
 	resetCanvas()
 	load(srcimg.filename)
-
-
-try:
-	load(defaultFileName)
-except:
-	pass
 
 def pressHist():
 	if srcimg.isNull() :
@@ -180,9 +176,7 @@ def pressNoise():
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
 	canvas.show()	
 	
-	tsimg = srcimg.getTKImage(500.0)
-	srcpanel.configure(image=tsimg)
-	srcpanel.image = tsimg
+	showPanel()
 
 	desimg.img.close()
 	desimg.img = srcimg.img
@@ -192,10 +186,6 @@ def pressFFT():
 		return 
 	srcimg.img = srcimg.img.convert('L')
 
-	tsimg = srcimg.getTKImage(500.0)
-	srcpanel.configure(image=tsimg)
-	srcpanel.image = tsimg
-
 	pixel = np.asarray(srcimg.img)
 	fourier = np.fft.fft2(pixel)
 	fourier = abs(np.fft.fftshift(fourier))
@@ -204,10 +194,8 @@ def pressFFT():
 
 	desimg.img.close()
 	desimg.img = Image.fromarray(norm).convert('L')
-	tdimg = desimg.getTKImage(500.0)
-	despanel.configure(image=tdimg)
-	despanel.image = tdimg
 
+	showPanel()
 
 
 histImg, noiseImg, fftImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('reload.jpg')
@@ -227,6 +215,9 @@ menu.add_command(label='Save', command=save)
 win.config(menu=menu)
 win.protocol("WM_DELETE_WINDOW", win.quit)
 
+try:
+	load(defaultFileName)
+except:
+	pass
+
 win.mainloop()
-
-
