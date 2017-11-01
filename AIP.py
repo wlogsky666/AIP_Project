@@ -113,24 +113,22 @@ def pressHist():
 	if srcimg.isNull() :
 		return 
 	blackimg = srcimg.img.convert('L')
-	y = [0]*256
-	for i in range(srcimg.width):
-		for j in range(srcimg.height):
-			y[blackimg.getpixel((i, j))] += 1
+	hist = blackimg.getdata()
+	bins = np.arange(0, 255, 1)
 
 	resetCanvas()
-	x = np.arange(0, 256)
 	fig=plt.figure(figsize=(500.0/96, 500.0/96))
 	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
-	ax.bar(x, y, linewidth=0, width=1.2, color='black')
+	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
 	ax.set_xlabel('Intensity')
 	ax.set_ylabel('Frequency')
-	plt.ylim(0, srcimg.width*srcimg.height/40)
+	ax.set_xticks(np.arange(0, 255 ,20))
 	global canvas
 	canvas=FigureCanvasTkAgg(fig, master=win)
 	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
-	canvas.show()
+	canvas.show()	
 
+## For noise 𝜎 value
 v = tk.StringVar()
 noiseInput = tk.Entry(win, textvariable=v, justify='center', font=("Helvetica", 14))
 noiseInput.place(x=160, y=115, width=50, height=20)
