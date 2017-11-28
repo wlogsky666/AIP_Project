@@ -5,6 +5,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+from matplotlib.ticker import FuncFormatter
 
 import tkinter as tk
 from PIL import ImageTk, Image
@@ -66,12 +67,15 @@ def showPanel():
 	despanel.configure(image=tdimg)
 	despanel.image = tdimg
 
-canvas = None
+canvas, canvas1 = None, None
 def resetCanvas():
-	global canvas
+	global canvas, canvas1
 	if canvas != None:
 		canvas.get_tk_widget().destroy()
 		canvas = None
+	if canvas1 != None:
+		canvas1.get_tk_widget().destroy()
+		canvas1 = None
 
 
 def load(filename=None):
@@ -109,6 +113,12 @@ def reload():
 	resetCanvas()
 	load(srcimg.filename)
 
+
+def thous(x, pos):
+    return '%1.1fK' % (x*1e-3)
+
+formatter = FuncFormatter(thous)
+
 def pressHist():
 	if srcimg.isNull() :
 		return 
@@ -119,6 +129,7 @@ def pressHist():
 	resetCanvas()
 	fig=plt.figure(figsize=(500.0/96, 500.0/96))
 	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
+	ax.yaxis.set_major_formatter(formatter)
 	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
 	ax.set_xlabel('Intensity')
 	ax.set_ylabel('Frequency')
@@ -193,6 +204,7 @@ def pressFFT():
 	desimg.img.close()
 	desimg.img = Image.fromarray(norm).convert('L')
 
+	resetCanvas()
 	showPanel()
 
 def pressHistEqual():
@@ -232,11 +244,43 @@ def pressHistEqual():
 		for y in range(srcimg.img.width):
 			desimg.img.putpixel((y, x), int(Tg[srcimg.img.getpixel((y,x))]))
 
-	srcimg.img = desimg.img
+	resetCanvas()
+
+	hist = srcimg.img.getdata()
+	bins = np.arange(0, 255, 1)
+	fig=plt.figure(figsize=(200.0/96, 200.0/96))
+	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
+	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
+	ax.set_xlabel('Intensity')
+	ax.set_ylabel('Frequency')
+	ax.set_xticks([])
+	ax.set_yticks([])
+	global canvas
+	canvas=FigureCanvasTkAgg(fig, master=win)
+	canvas._tkcanvas.place(x=330, y=520, width=200, height=200)
+	# plt.yscale('log')
+
+	hist = desimg.img.getdata()
+
+	fig=plt.figure(figsize=(200.0/96, 200.0/96))
+	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
+	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
+	ax.set_xlabel('Intensity')
+	ax.set_ylabel('Frequency')
+	ax.set_xticks([])
+	ax.set_yticks([])
+	global canvas1
+	canvas1=FigureCanvasTkAgg(fig, master=win)
+	canvas1._tkcanvas.place(x=850, y=520, width=200, height=200)
+
+	# plt.yscale('log')
+	canvas.show()
+	canvas1.show()
 	showPanel()
 
 
-histImg, noiseImg, fftImg, histEqualImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histimg.jpg'), IMAGE('reload.jpg')
+
+histImg, noiseImg, fftImg, histEqualImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histequal.png'), IMAGE('reload.jpg')
 histImgTmp, noiseImgTmp,fftImgTmp, histEqualImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), histEqualImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
 histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp).place(x=30, y=30, width=80, height=80)
 noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp).place(x=130, y=30, width=80, height=80)
