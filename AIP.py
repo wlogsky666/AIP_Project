@@ -195,12 +195,53 @@ def pressFFT():
 
 	showPanel()
 
+def pressHistEqual():
+	if srcimg.isNull():
+		return
+	srcimg.img = srcimg.img.convert('L')
+	desimg.img = desimg.img.convert('L')
 
-histImg, noiseImg, fftImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('reload.jpg')
-histImgTmp, noiseImgTmp,fftImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
+	## Intensity
+	H = np.zeros(256)
+	for x in range(srcimg.img.height):
+		for y in range(srcimg.img.width):
+			H[srcimg.img.getpixel((y, x))] += 1
+
+	## Gmin
+	gmin = 2000000
+	for x in range(256):
+		if 0 < H[x]:
+			gmin = x
+			break 
+
+	## Cumulative 
+	Hc = np.zeros(256)
+	Hc[0] = H[0]
+	for i in range(1, 256):
+		Hc[i] = Hc[i-1] + H[i]
+	
+	Hmin = Hc[gmin] 
+
+	## Tg
+	Tg = np.zeros(256)
+	for i in range(256):
+		Tg[i] = round( (Hc[i]-Hmin)/(srcimg.img.width*srcimg.img.height-Hmin)*255 )
+
+	## Rescan
+	for x in range(srcimg.img.height):
+		for y in range(srcimg.img.width):
+			desimg.img.putpixel((y, x), int(Tg[srcimg.img.getpixel((y,x))]))
+
+	srcimg.img = desimg.img
+	showPanel()
+
+
+histImg, noiseImg, fftImg, histEqualImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histimg.jpg'), IMAGE('reload.jpg')
+histImgTmp, noiseImgTmp,fftImgTmp, histEqualImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), histEqualImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
 histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp).place(x=30, y=30, width=80, height=80)
 noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp).place(x=130, y=30, width=80, height=80)
 fftButton = tk.Button(win, command=pressFFT, bg='cyan', activebackground='red', image=fftImgTmp).place(x=230, y=30, width=80, height=80)
+histEqualButton = tk.Button(win, command=pressHistEqual, bg='cyan', activebackground='red', image=histEqualImgTmp).place(x=330, y=30, width=80, height=80)
 reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp).place(x=970, y=30, width=80, height=80)
 
 
