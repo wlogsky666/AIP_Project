@@ -122,22 +122,42 @@ formatter = FuncFormatter(thous)
 def pressHist():
 	if srcimg.isNull() :
 		return 
-	blackimg = srcimg.img.convert('L')
-	hist = blackimg.getdata()
-	bins = np.arange(0, 255, 1)
+	srcimg.img = srcimg.img.convert('L')
+	desimg.img = desimg.img.convert('L')
 
 	resetCanvas()
-	fig=plt.figure(figsize=(500.0/96, 500.0/96))
+
+	hist = srcimg.img.getdata()
+	bins = np.arange(0, 255, 1)
+	fig=plt.figure(figsize=(200.0/96, 200.0/96))
 	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
-	ax.yaxis.set_major_formatter(formatter)
 	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
 	ax.set_xlabel('Intensity')
 	ax.set_ylabel('Frequency')
-	ax.set_xticks(np.arange(0, 255 ,20))
+	ax.set_xticks([])
+	ax.set_yticks([])
 	global canvas
 	canvas=FigureCanvasTkAgg(fig, master=win)
-	canvas._tkcanvas.place(x=550, y=150, width=500, height=500)
-	canvas.show()	
+	canvas._tkcanvas.place(x=330, y=520, width=200, height=200)
+	# plt.yscale('log')
+
+	hist = desimg.img.getdata()
+
+	fig=plt.figure(figsize=(200.0/96, 200.0/96))
+	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
+	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
+	ax.set_xlabel('Intensity')
+	ax.set_ylabel('Frequency')
+	ax.set_xticks([])
+	ax.set_yticks([])
+	global canvas1
+	canvas1=FigureCanvasTkAgg(fig, master=win)
+	canvas1._tkcanvas.place(x=850, y=520, width=200, height=200)
+
+	# plt.yscale('log')
+	canvas.show()
+	canvas1.show()
+	showPanel()
 
 ## For noise 𝜎 value
 v = tk.StringVar()
@@ -244,40 +264,14 @@ def pressHistEqual():
 		for y in range(srcimg.img.width):
 			desimg.img.putpixel((y, x), int(Tg[srcimg.img.getpixel((y,x))]))
 
-	resetCanvas()
+	pressHist()
 
-	hist = srcimg.img.getdata()
-	bins = np.arange(0, 255, 1)
-	fig=plt.figure(figsize=(200.0/96, 200.0/96))
-	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
-	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
-	ax.set_xlabel('Intensity')
-	ax.set_ylabel('Frequency')
-	ax.set_xticks([])
-	ax.set_yticks([])
-	global canvas
-	canvas=FigureCanvasTkAgg(fig, master=win)
-	canvas._tkcanvas.place(x=330, y=520, width=200, height=200)
-	# plt.yscale('log')
+def pressSmoothing():
+	pass
 
-	hist = desimg.img.getdata()
 
-	fig=plt.figure(figsize=(200.0/96, 200.0/96))
-	ax=fig.add_axes([0.1,0.1,0.8,0.8], projection='rectilinear')
-	ax.hist(hist, bins=bins, linewidth=0, width=1.2, color='black')
-	ax.set_xlabel('Intensity')
-	ax.set_ylabel('Frequency')
-	ax.set_xticks([])
-	ax.set_yticks([])
-	global canvas1
-	canvas1=FigureCanvasTkAgg(fig, master=win)
-	canvas1._tkcanvas.place(x=850, y=520, width=200, height=200)
-
-	# plt.yscale('log')
-	canvas.show()
-	canvas1.show()
-	showPanel()
-
+def pressEdgeDetection():
+	pass
 
 
 histImg, noiseImg, fftImg, histEqualImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histequal.png'), IMAGE('reload.jpg')
