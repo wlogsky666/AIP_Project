@@ -266,20 +266,120 @@ def pressHistEqual():
 
 	pressHist()
 
-def pressSmoothing():
-	pass
+
+col = []
+row, row1 = [], []
+s1 = tk.StringVar()
+
+def smooth():
+	
+	s = int(s1.get())
+	total = 0
+	for i in range(s):
+		for j in range(s):
+			total += int(row[i][j].get())
+			print(row[i][j].get(), sep=' ', end=' ')
+		print('\n')
+
+	srcimg.img = srcimg.img.convert('L')
+	desimg.img = desimg.img.convert('L')
+
+	for x in range(int((s-1)/2), desimg.width-int((s-1)/2)):
+		for y in range(int((s-1)/2), desimg.height-int((s-1)/2)):
+			pixelValue = 0
+			for sx in range(s):
+				for sy in range(s):
+					pixelValue += int(row[sx][sy].get()) * srcimg.img.getpixel((x-int((s-1)/2)+sx, y-int((s-1)/2)+sy))
+
+			desimg.img.putpixel((x, y), int(pixelValue/total))
+
+	showPanel()
+
+row1 = []
+def edgeDetect():
+	global row, row1
+	if len(row1) == 0:
+		row1 = row
+		inputMask(edgeDetect)
+
+	else:
+		row2 = row
+
+		srcimg.img = srcimg.img.convert('L')
+		desimg.img = desimg.img.convert('L')
+
+		s = int(s1.get())
+
+		for x in range(int((s-1)/2), desimg.width-int((s-1)/2)):
+			for y in range(int((s-1)/2), desimg.height-int((s-1)/2)):
+				pixelValue1 = 0
+				pixelValue2 = 0 
+				for sx in range(s):
+					for sy in range(s):
+						pixelValue1 += int(row1[sx][sy].get()) * srcimg.img.getpixel((x-int((s-1)/2)+sx, y-int((s-1)/2)+sy))
+						pixelValue2 += int(row[sx][sy].get()) * srcimg.img.getpixel((x-int((s-1)/2)+sx, y-int((s-1)/2)+sy))
+
+				pixelValue = int(sqrt(pixelValue1**2+pixelValue2**2))
+
+				desimg.img.putpixel((x, y), pixelValue if pixelValue < 255 else 255)
+
+		showPanel()
+		row1 = []
+
+def inputMask(func):
+	s = int(s1.get())
+	
+	mask = tk.Toplevel(win)
+	mask.title('Mask')
+	size = '{0}x{1}'.format(s*100, s*50+40)
+	mask.geometry(size)
+
+	global row, col
+	row = []
+	for i in range(s):
+		col = []
+		for j in range(s):
+			stmp = tk.StringVar()
+			tmp = tk.Entry(mask, textvariable=stmp, justify='center', font=("Helvetica", 14))
+			tmp.place(x=j*100+30, y=i*50, width=30, height=30)
+			stmp.set(1)
+			col.append(stmp)
+
+		row.append(col)
+		tk.Button(mask, command=lambda:[func(), mask.destroy()], text='Apply').place(x=0, y=s*50, width=s*50, height=40)
+
+def inputSize(func):
+	inputSize = tk.Toplevel(win)
+	inputSize.title('Size')
+	inputSize.geometry('200x50')
+
+	s1.set(3)
+	sx, sy = tk.Entry(inputSize, textvariable=s1, justify='center', font=("Helvetica", 14)), tk.Entry(inputSize, textvariable=s1, justify='center', font=("Helvetica", 14))
+
+	sx.place(x=0, y=0, width=80, height=20)
+	sy.place(x=100, y=0, width=80, height=20)
+
+	xx = tk.Label(inputSize, text = u' x ', font=("Helvetica", 14))
+	xx.place(x=80, y=0, width=20, height=20)
+	tk.Button(inputSize, command=lambda:[inputMask(func), inputSize.destroy()], text='Apply').place(x=0, y=20, width=200, height=30)
+
+
+def pressSmooth():
+	inputSize(smooth)
 
 
 def pressEdgeDetection():
-	pass
+	inputSize(edgeDetect)
 
 
-histImg, noiseImg, fftImg, histEqualImg, reloadImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histequal.png'), IMAGE('reload.jpg')
-histImgTmp, noiseImgTmp,fftImgTmp, histEqualImgTmp, reloadImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), histEqualImg.getTKImage(70.0), reloadImg.getTKImage(70.0)
+histImg, noiseImg, fftImg, histEqualImg, reloadImg, smoothImg, edgeImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histequal.png'), IMAGE('reload.jpg'), IMAGE('smooth.jpg'), IMAGE('edge.jpg')
+histImgTmp, noiseImgTmp,fftImgTmp, histEqualImgTmp, reloadImgTmp, smoothImgTmp, edgeImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), histEqualImg.getTKImage(70.0), reloadImg.getTKImage(70.0), smoothImg.getTKImage(70.0), edgeImg.getTKImage(70.0)
 histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp).place(x=30, y=30, width=80, height=80)
 noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp).place(x=130, y=30, width=80, height=80)
 fftButton = tk.Button(win, command=pressFFT, bg='cyan', activebackground='red', image=fftImgTmp).place(x=230, y=30, width=80, height=80)
 histEqualButton = tk.Button(win, command=pressHistEqual, bg='cyan', activebackground='red', image=histEqualImgTmp).place(x=330, y=30, width=80, height=80)
+smoothButton = tk.Button(win, command=pressSmooth, bg='cyan', activebackground='red', image=smoothImgTmp).place(x=430, y=30, width=80, height=80)
+edgeButton = tk.Button(win, command=pressEdgeDetection, bg='cyan', activebackground='red', image=edgeImgTmp).place(x=530, y=30, width=80, height=80)
 reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp).place(x=970, y=30, width=80, height=80)
 
 
