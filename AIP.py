@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 
 import tkinter as tk
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageFilter
 from tkinter import filedialog
 import numpy as np
 import random
@@ -275,27 +275,25 @@ def smooth():
 	
 	s = int(s1.get())
 	total = 0
+	mask = []
 	for i in range(s):
 		for j in range(s):
 			total += int(row[i][j].get())
-			print(row[i][j].get(), sep=' ', end=' ')
-		print('\n')
+			mask.append(int(row[i][j].get()))
 
 	srcimg.img = srcimg.img.convert('L')
 	desimg.img = desimg.img.convert('L')
 
-	for x in range(int((s-1)/2), desimg.width-int((s-1)/2)):
-		for y in range(int((s-1)/2), desimg.height-int((s-1)/2)):
-			pixelValue = 0
-			for sx in range(s):
-				for sy in range(s):
-					pixelValue += int(row[sx][sy].get()) * srcimg.img.getpixel((x-int((s-1)/2)+sx, y-int((s-1)/2)+sy))
+	pixels = np.array(srcimg.img.getdata()).reshape((srcimg.height, srcimg.width))
+	mask = np.array(mask).reshape((s, s))
 
-			desimg.img.putpixel((x, y), int(pixelValue/total))
+	for x in range(0, desimg.height-s):
+		for y in range(0, desimg.width-s):
+			convolution = sum(sum((mask*pixels[x:x+3, y:y+3]))) // total
+			desimg.img.putpixel((y+int(s//2), x+int(s//2)), int(convolution))
 
 	showPanel()
 
-row1 = []
 def edgeDetect():
 	global row, row1
 	if len(row1) == 0:
@@ -309,19 +307,25 @@ def edgeDetect():
 		desimg.img = desimg.img.convert('L')
 
 		s = int(s1.get())
+		mask1 = []
+		mask2 = []
 
-		for x in range(int((s-1)/2), desimg.width-int((s-1)/2)):
-			for y in range(int((s-1)/2), desimg.height-int((s-1)/2)):
-				pixelValue1 = 0
-				pixelValue2 = 0 
-				for sx in range(s):
-					for sy in range(s):
-						pixelValue1 += int(row1[sx][sy].get()) * srcimg.img.getpixel((x-int((s-1)/2)+sx, y-int((s-1)/2)+sy))
-						pixelValue2 += int(row[sx][sy].get()) * srcimg.img.getpixel((x-int((s-1)/2)+sx, y-int((s-1)/2)+sy))
+		for i in range(s):
+			for j in range(s):
+				mask1.append(int(row1[i][j].get()))
+				mask2.append(int(row2[i][j].get()))
 
+		pixels = np.array(srcimg.img.getdata()).reshape((srcimg.height, srcimg.width))
+		mask1 = np.array(mask1).reshape((s, s))
+		mask2 = np.array(mask2).reshape((s, s))
+
+		for x in range(0, desimg.height-s):
+			for y in range(0, desimg.width-s):
+				pixelValue1 = sum(sum((mask1*pixels[x:x+3, y:y+3]))) 
+				pixelValue2 = sum(sum((mask2*pixels[x:x+3, y:y+3]))) 
 				pixelValue = int(sqrt(pixelValue1**2+pixelValue2**2))
 
-				desimg.img.putpixel((x, y), pixelValue if pixelValue < 255 else 255)
+				desimg.img.putpixel((y+int(s//2), x+int(s//2)), pixelValue if pixelValue < 255 else 255)
 
 		showPanel()
 		row1 = []
@@ -398,3 +402,7 @@ except:
 	pass
 
 win.mainloop()
+
+
+	# srcimg.img = srcimg.img.filter(ImageFilter.SMOOTH).filter(ImageFilter.CONTOUR).convert('L')
+	# desimg.img = desimg.img.filter(ImageFilter.SMOOTH_MORE).filter(ImageFilter.CONTOUR).convert('L')
