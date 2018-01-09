@@ -9,10 +9,17 @@ from matplotlib.ticker import FuncFormatter
 
 import tkinter as tk
 from PIL import ImageTk, Image, ImageFilter
+from skimage.feature import hog
+from skimage import color, exposure
+from skimage import transform as tf
+from skimage.feature import (match_descriptors, corner_harris,
+                             corner_peaks, ORB, plot_matches)
+
 from tkinter import filedialog
 import numpy as np
 import random
-from math import sin, cos, log, pi, sqrt
+from math import sin, cos, log, pi, sqrt, exp
+import cv2
 
 
 class IMAGE():
@@ -325,7 +332,7 @@ def edgeDetect():
 				pixelValue2 = sum(sum((mask2*pixels[x:x+3, y:y+3]))) 
 				pixelValue = int(sqrt(pixelValue1**2+pixelValue2**2))
 
-				desimg.img.putpixel((y+int(s//2), x+int(s//2)), pixelValue if pixelValue < 255 else 255)
+				desimg.img.putpixel((y+int(s//2), x+int(s//2)), 255-pixelValue if pixelValue < 255 else 0)
 
 		showPanel()
 		row1 = []
@@ -367,23 +374,114 @@ def inputSize(func):
 	xx.place(x=80, y=0, width=20, height=20)
 	tk.Button(inputSize, command=lambda:[inputMask(func), inputSize.destroy()], text='Apply').place(x=0, y=20, width=200, height=30)
 
-
 def pressSmooth():
 	inputSize(smooth)
-
 
 def pressEdgeDetection():
 	inputSize(edgeDetect)
 
+def slidingWindow(src, template, heatmap, draw, colors, size):
+	done = False
+	x, y = 0, 0
+	h, w= src.shape[:2]
+	th, tw = template.shape[:2]
+	shift = h*w//8000
 
-histImg, noiseImg, fftImg, histEqualImg, reloadImg, smoothImg, edgeImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histequal.png'), IMAGE('reload.jpg'), IMAGE('smooth.jpg'), IMAGE('edge.jpg')
-histImgTmp, noiseImgTmp,fftImgTmp, histEqualImgTmp, reloadImgTmp, smoothImgTmp, edgeImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), histEqualImg.getTKImage(70.0), reloadImg.getTKImage(70.0), smoothImg.getTKImage(70.0), edgeImg.getTKImage(70.0)
+	templateHist = hog(template, orientations=9, pixels_per_cell=(12, 12), cells_per_block=(8, 8), feature_vector=True)
+	nTemplateHist = np.array(templateHist)
+
+	while done == False:
+		if y + th > h:
+			done = True
+		else:
+			piece = src[y:y+th, x:x+tw]
+			hist = hog(piece, orientations=9, pixels_per_cell=(12, 12), cells_per_block=(8, 8), feature_vector=True)
+			hist = np.array(hist)
+			norm = sum((nTemplateHist - hist) ** 2)
+			norm = exp(-norm/255)
+
+			if size == 280:
+				threshold = 0.974
+			elif size == 250:
+				threshold = 0.99
+
+			if norm > threshold:
+				if sum(sum(piece)) > 5000:
+					heatmap[y+(th//4):y+(th*3//4), x+(tw//4):x+(tw*3//4)] += 20
+					heatmap[y:y+th, x:x+tw] += 10
+					cv2.rectangle(draw, (x, y), (x+tw, y+th), colors, 5)
+			else:
+				x = x + shift//2
+			print(norm)
+
+			x = x + shift//2
+			if x + tw > w:
+				y = y + shift
+				x = 0
+
+def pressCarDetection():
+	# srcimg.img = srcimg.img.filter(ImageFilter.SMOOTH).filter(ImageFilter.CONTOUR).convert('L')
+	# desimg.img = desimg.img.filter(ImageFilter.SMOOTH).filter(ImageFilter.CONTOUR).convert('L')
+
+	image = cv2.cvtColor(np.array(srcimg.img.convert('RGB')), cv2.COLOR_RGB2BGR)
+	draw = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+	kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))   
+	opened = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel) 
+	blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+	cannyed = cv2.Canny(blurred, 50, 190)
+
+	height, width = image.shape[:2]
+	heatmap = np.zeros(height*width).reshape((height, width))
+
+	size = 280
+	if width*height < 300000:
+		size = 250
+	color = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(255,0,255),(0,255,255),(255,255,255)]
+	for i in range(1, 7):
+		template = cv2.imread('template/'+str(i)+'.jpg')
+		template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+		template = cv2.resize(template, (size, size))
+
+		## Sliding window
+		slidingWindow(cannyed, template, heatmap, draw, color[i-1], size)
+
+	for ir, row in enumerate(heatmap):
+		for ic, col in enumerate(row):
+			if col <= 30 :
+				heatmap[ir][ic] = 0
+			if ir <= 50 or ir >= height-50:
+				heatmap[ir][ic] = 0
+			elif ic <= 50 or ic >= width-50:
+				heatmap[ir][ic] = 0
+
+
+	tmp = Image.fromarray(heatmap).convert('L')
+	
+	gray = cv2.cvtColor(np.array(tmp), cv2.COLOR_GRAY2BGR)
+	gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+	(_, cnts, _) = cv2.findContours(gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+	new = cv2.drawContours(image, cnts, -1, (255, 255, 0), 4)
+
+	cv2.imshow("Heatmap", gray)
+	cv2.imshow("Draw", draw)
+	cv2.imshow("Canny", cannyed)
+	desimg.img = Image.fromarray(cv2.cvtColor(new, cv2.COLOR_BGR2RGB))
+	# desimg.img = Image.fromarray(cannyed)
+
+	showPanel()
+
+
+histImg, noiseImg, fftImg, histEqualImg, reloadImg, smoothImg, edgeImg, detectImg = IMAGE('histimg.jpg'), IMAGE('noise.jpg'),IMAGE('fft.png'), IMAGE('histequal.png'), IMAGE('reload.jpg'), IMAGE('smooth.jpg'), IMAGE('edge.jpg'), IMAGE('detect.png')
+histImgTmp, noiseImgTmp,fftImgTmp, histEqualImgTmp, reloadImgTmp, smoothImgTmp, edgeImgTmp, detectImgTmp = histImg.getTKImage(70.0), noiseImg.getTKImage(70.0),fftImg.getTKImage(70.0), histEqualImg.getTKImage(70.0), reloadImg.getTKImage(70.0), smoothImg.getTKImage(70.0), edgeImg.getTKImage(70.0), detectImg.getTKImage(70.0)
 histButton = tk.Button(win, command=pressHist, bg='cyan', activebackground='red', image=histImgTmp).place(x=30, y=30, width=80, height=80)
 noiseButton = tk.Button(win, command=pressNoise, bg='cyan', activebackground='red', image=noiseImgTmp).place(x=130, y=30, width=80, height=80)
 fftButton = tk.Button(win, command=pressFFT, bg='cyan', activebackground='red', image=fftImgTmp).place(x=230, y=30, width=80, height=80)
 histEqualButton = tk.Button(win, command=pressHistEqual, bg='cyan', activebackground='red', image=histEqualImgTmp).place(x=330, y=30, width=80, height=80)
 smoothButton = tk.Button(win, command=pressSmooth, bg='cyan', activebackground='red', image=smoothImgTmp).place(x=430, y=30, width=80, height=80)
 edgeButton = tk.Button(win, command=pressEdgeDetection, bg='cyan', activebackground='red', image=edgeImgTmp).place(x=530, y=30, width=80, height=80)
+detectCarButton = tk.Button(win, command=pressCarDetection, bg='cyan', activebackground='red', image=detectImgTmp).place(x=630, y=30, width=80, height=80)
 reloadButton = tk.Button(win, command=reload, bg='cyan', activebackground='red', image=reloadImgTmp).place(x=970, y=30, width=80, height=80)
 
 
@@ -404,5 +502,3 @@ except:
 win.mainloop()
 
 
-	# srcimg.img = srcimg.img.filter(ImageFilter.SMOOTH).filter(ImageFilter.CONTOUR).convert('L')
-	# desimg.img = desimg.img.filter(ImageFilter.SMOOTH_MORE).filter(ImageFilter.CONTOUR).convert('L')
